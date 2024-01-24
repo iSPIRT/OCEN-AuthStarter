@@ -1,6 +1,7 @@
 package com.example.ocenauthentication.registry;
 
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -10,24 +11,32 @@ import reactor.core.publisher.Mono;
 @Service
 public class RegistryServiceImpl implements RegistryService {
 
-    public static final String TOKEN_URL = "https://auth.ocen.network/realms/dev/protocol/openid-connect/token";
-
     private final WebClient webClient;
 
-    private String clientId = "<YOUR_CLIENT_ID>";
-    private String clientSecret = "<YOUR_CLIENT_SECRET>";
+    private final String lenderClientId;
+    private final String lenderClientSecret;
+    private final String tokenGenerationUrl;
+    private final String participantRolesUrl;
 
-    public RegistryServiceImpl() {
+    public RegistryServiceImpl(@Value("${lender.client.id}") String lenderClientId,
+                               @Value("${lender.client.secret}") String lenderClientSecret,
+                               @Value("${ocen.token.generation.url}") String tokenGenerationUrl,
+                               @Value("${ocen.participant.roles.url}") String participantRolesUrl) {
+        this.lenderClientId = lenderClientId;
+        this.lenderClientSecret = lenderClientSecret;
+        this.tokenGenerationUrl = tokenGenerationUrl;
+        this.participantRolesUrl = participantRolesUrl;
+
         WebClient.Builder webcliBuilder = WebClient.builder();
         webClient = webcliBuilder.build();
     }
 
     @Override
     public Mono<ParticipantDetail> getEntity(String entityId) {
-        return getBearerToken(clientId, clientSecret)
+        return getBearerToken(lenderClientId, lenderClientSecret)
                 .flatMap(token -> {
                     System.out.println("Token - " + token);
-                    return webClient.get().uri("https://dev.ocen.network/service/participant-roles/" + entityId)
+                    return webClient.get().uri(participantRolesUrl + entityId)
                             .header("Authorization", "Bearer " + token.getAccessToken())
                             .retrieve()
                             .bodyToMono(ParticipantDetail.class);
@@ -36,7 +45,7 @@ public class RegistryServiceImpl implements RegistryService {
 
     public Mono<Token> getBearerToken(String clientId, String clientSecret) {
         return webClient.post()
-                .uri(TOKEN_URL)
+                .uri(tokenGenerationUrl)
                 .header(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded")
                 .body(BodyInserters.fromFormData("grant_type", "client_credentials")
                         .with("client_id", clientId)

@@ -12,6 +12,7 @@ import com.example.ocenauthentication.registry.RegistryService;
 import lombok.extern.log4j.Log4j2;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.lang.JoseException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpStatus;
@@ -38,16 +39,18 @@ import static com.example.ocenauthentication.jws.JWSResponseValidator.parseSign;
 // This request filter verifies the signature using the LA public key
 public class JwsRequestWebFilter extends JwsAckResponseWebFilter {
 
-    public static final String PARTICIPANT_ID = "1802";
+    private final String laParticipantId;
     protected final List<PathPattern> pathPatterns;
     private final RegistryService registryService;
 
     public JwsRequestWebFilter(JWSSigner signer,
                                List<PathPattern> pathPatterns,
-                               RegistryService registryService) {
+                               RegistryService registryService,
+                               String laParticipantId) {
         super(signer);
         this.pathPatterns = pathPatterns;
         this.registryService = registryService;
+        this.laParticipantId = laParticipantId;
     }
 
     @Nonnull
@@ -73,7 +76,7 @@ public class JwsRequestWebFilter extends JwsAckResponseWebFilter {
             @Override
             @Nonnull
             public Flux<DataBuffer> getBody() {
-                Mono<String> laPublicKey = registryService.getEntity(PARTICIPANT_ID)
+                Mono<String> laPublicKey = registryService.getEntity(laParticipantId)
                         .map(participantDetail -> participantDetail.getPublicKey());
 
                 return Mono.zip(DataBufferUtils.join(super.getBody()), laPublicKey,
