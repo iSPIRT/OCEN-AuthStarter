@@ -12,6 +12,7 @@ OCEN authentication project for signature verification
 | Lender Public and Private Keypair Set |  &#8226; Add Lender Public and Private Keypair Set in lender_private_public_keypair_set.json file located at resources folder <br>&#10; &#8226; Reference to create Public and Private Key Pair Set - https://mkjwk.org/|
 | Lender Client Id | &#8226; Add your lender client id at lender.client.id in application.properties file located at resources folder |
 | Lender Client Secret | &#8226; Add your lender client secret at lender.client.secret in application.properties file located at resources folder |
+| LA Participant Id | &#8226; Add your LA participant id at la.participant.id in application.properties file located at resources folder |
 
 
 <br>
