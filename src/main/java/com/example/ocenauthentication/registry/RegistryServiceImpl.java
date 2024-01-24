@@ -14,8 +14,8 @@ public class RegistryServiceImpl implements RegistryService {
 
     private final WebClient webClient;
 
-    private String clientId = "41efd1cd-b412-4705-9d7a-667fbc353220";
-    private String clientSecret = "ckt01bM65MApQxvqoE0oZJnzXBDhzwTj";
+    private String clientId = "<YOUR_CLIENT_ID>";
+    private String clientSecret = "<YOUR_CLIENT_SECRET>";
 
     public RegistryServiceImpl() {
         WebClient.Builder webcliBuilder = WebClient.builder();
