@@ -1,6 +1,7 @@
 package org.example.registry;
 
 
+import org.example.util.PropertyConstants;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -13,17 +14,17 @@ public class RegistryServiceImpl implements RegistryService {
 
     private final WebClient webClient;
 
-    private final String lenderClientId;
-    private final String lenderClientSecret;
+    private final String clientId;
+    private final String clientSecret;
     private final String tokenGenerationUrl;
     private final String participantRolesUrl;
 
-    public RegistryServiceImpl(@Value("${client.id}") String lenderClientId,
-                               @Value("${client.secret}") String lenderClientSecret,
-                               @Value("${ocen.token.generation.url}") String tokenGenerationUrl,
-                               @Value("${ocen.participant.roles.url}") String participantRolesUrl) {
-        this.lenderClientId = lenderClientId;
-        this.lenderClientSecret = lenderClientSecret;
+    public RegistryServiceImpl(@Value(PropertyConstants.CLIENT_ID) String clientId,
+                               @Value(PropertyConstants.CLIENT_SECRET) String clientSecret,
+                               @Value(PropertyConstants.OCEN_TOKEN_GEN_URL) String tokenGenerationUrl,
+                               @Value(PropertyConstants.OCEN_REGISTRY_PARTICIPANT_ROLE_URL) String participantRolesUrl) {
+        this.clientId = clientId;
+        this.clientSecret = clientSecret;
         this.tokenGenerationUrl = tokenGenerationUrl;
         this.participantRolesUrl = participantRolesUrl;
 
@@ -33,7 +34,7 @@ public class RegistryServiceImpl implements RegistryService {
 
     @Override
     public Mono<ParticipantDetail> getEntity(String entityId) {
-        return getBearerToken(lenderClientId, lenderClientSecret)
+        return getBearerToken(clientId, clientSecret)
                 .flatMap(token -> {
                     System.out.println("Token - " + token);
                     return webClient.get().uri(participantRolesUrl + entityId)
@@ -43,7 +44,7 @@ public class RegistryServiceImpl implements RegistryService {
                 });
     }
 
-    public Mono<Token> getBearerToken(String clientId, String clientSecret) {
+    private Mono<Token> getBearerToken(String clientId, String clientSecret) {
         return webClient.post()
                 .uri(tokenGenerationUrl)
                 .header(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded")
