@@ -141,6 +141,51 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "HeartbeatEventAPI",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJHZHlVUDgzV0tvMjFSMWxVRGhvRFptWGZqeG5UMkdoTG54MjdfMXNOZWZNIn0.eyJleHAiOjE3MTExMjYyNzEsImlhdCI6MTcxMTEyNDQ3MSwianRpIjoiZDc1MWJhNzUtOWEwYi00MzdmLTg4OTEtZTg3NzIzOTI1Mzg1IiwiaXNzIjoiaHR0cHM6Ly9hdXRoLm9jZW4ubmV0d29yay9yZWFsbXMvZGV2IiwiYXVkIjpbIjQ4Zjg2MTdiLTM4NGItNGU0Yi05MDIyLWMxNzQyNDg3NmU2NSIsImFjY291bnQiXSwic3ViIjoiNDk0YjI0ZjUtY2I5Ni00Y2I5LWIxODYtOWE1OTg0NGFiNzRhIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoiNDhmODYxN2ItMzg0Yi00ZTRiLTkwMjItYzE3NDI0ODc2ZTY1IiwiYWNyIjoiMSIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJkZWZhdWx0LXJvbGVzLWRldiIsIm9mZmxpbmVfYWNjZXNzIiwidW1hX2F1dGhvcml6YXRpb24iXX0sInJlc291cmNlX2FjY2VzcyI6eyJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6InByb2ZpbGUgcGFydGljaXBhbnRJZCBlbWFpbCIsInBhcnRpY2lwYW50SWQiOiIzMDUxIiwiY2xpZW50SG9zdCI6IjQ5LjIwNy4yMjYuNTIiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsImNsaWVudElkIjoiNDhmODYxN2ItMzg0Yi00ZTRiLTkwMjItYzE3NDI0ODc2ZTY1Iiwicm9sZXMiOiJST0xFX0xPQU5fQUdFTlQiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJzZXJ2aWNlLWFjY291bnQtNDhmODYxN2ItMzg0Yi00ZTRiLTkwMjItYzE3NDI0ODc2ZTY1IiwiY2xpZW50QWRkcmVzcyI6IjQ5LjIwNy4yMjYuNTIifQ.MOLYh1LRBCTEUB5FnfeV3j7NNU4NnU-UrP8cSYtL1bW_BkmHc4cw32HkCiwE87-sfsRVlQfqvjjAA6lcNTMdieHySuJsLqX_1_iHdOImU5b04P3t_RERg1xCiI32-a7O4ilvDaNQ3I343PG3RhMWweaFkeiCK1Xv2jX7fs95pSZ2CiNaOxsOHHnq-YBfjzbkZC_YMoWFEWTKOeTuTgcbt2f_MnQ3v6jFNhSrpuGFZrr_yNITSXiGEkbojpC4vh75AFEbiLNuOSNS1wp7JbDKXI1CLeRFx__XFkPLV6-X9LDbfpsiMF4r07tLH4T2o3-HUEOpAMjR7Yv2-FYsYtSeQg",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"event\": {\n        \"timestamp\": 1711124641431,\n        \"eventType\": \"LOAN_REQ\",\n        \"requestId\": \"createLoanRequestSample\",\n        \"loanMetadata\": {\n            \"loanApplicationId\": \"some-application-id1711124641431\",\n            \"loanId\": \"null\",\n            \"productData\": {\n                \"productId\": \"3101\",\n                \"productNetworkId\": \"3151\"\n            }\n        },\n        \"responseCode\": 200\n    }\n}"
+				},
+				"url": {
+					"raw": "http://analytics-dev.ocen.network/ocen/v4/event",
+					"protocol": "http",
+					"host": [
+						"analytics-dev",
+						"ocen",
+						"network"
+					],
+					"path": [
+						"ocen",
+						"v4",
+						"event"
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }
