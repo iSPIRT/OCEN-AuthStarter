@@ -9,10 +9,12 @@ package org.example.filter.request;
 import lombok.extern.log4j.Log4j2;
 import org.example.filter.ackresponse.JwsAckResponseWebFilter;
 import org.example.jws.JWSSigner;
+import org.example.jws.SignatureService;
 import org.example.registry.RegistryService;
+import org.example.util.PayloadUtil;
 import org.jose4j.jwk.JsonWebKey;
+import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.lang.JoseException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpStatus;
@@ -39,18 +41,18 @@ import static org.example.jws.JWSResponseValidator.parseSign;
 // This request filter verifies the signature using the LA public key
 public class JwsRequestWebFilter extends JwsAckResponseWebFilter {
 
-    private final String laParticipantId;
     protected final List<PathPattern> pathPatterns;
     private final RegistryService registryService;
 
+    private final SignatureService signatureService;
+
     public JwsRequestWebFilter(JWSSigner signer,
                                List<PathPattern> pathPatterns,
-                               RegistryService registryService,
-                               String laParticipantId) {
+                               RegistryService registryService, SignatureService signatureService) {
         super(signer);
         this.pathPatterns = pathPatterns;
         this.registryService = registryService;
-        this.laParticipantId = laParticipantId;
+        this.signatureService = signatureService;
     }
 
     @Nonnull
@@ -65,6 +67,9 @@ public class JwsRequestWebFilter extends JwsAckResponseWebFilter {
             }
         }
 
+        if (pathContainer.value().startsWith("/mock-request"))
+            return super.filter(exchange, chain);
+
         if (pathContainer.value().equalsIgnoreCase("/common/heartbeat"))
             return super.filter(exchange, chain);
 
@@ -76,7 +81,19 @@ public class JwsRequestWebFilter extends JwsAckResponseWebFilter {
             @Override
             @Nonnull
             public Flux<DataBuffer> getBody() {
-                Mono<String> laPublicKey = registryService.getEntity(laParticipantId)
+                String bearerToken = super.getHeaders().getFirst("Authorization");
+                boolean signatureVerified = false;
+                try {
+                    signatureVerified = signatureService.verifyTokenSignature(bearerToken);
+                } catch (InvalidJwtException e) {
+                    //Do Nothing
+                }
+                if (!signatureVerified) {
+                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Signature");
+                }
+
+                String participantId = PayloadUtil.getParticipantIdFromToken(bearerToken);
+                Mono<String> laPublicKey = registryService.getEntity(participantId)
                         .map(participantDetail -> participantDetail.getPublicKey());
 
                 return Mono.zip(DataBufferUtils.join(super.getBody()), laPublicKey,

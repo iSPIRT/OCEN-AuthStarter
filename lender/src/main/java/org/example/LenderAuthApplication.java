@@ -3,6 +3,7 @@ package org.example;
 import lombok.extern.log4j.Log4j2;
 import org.example.filter.request.JwsRequestWebFilter;
 import org.example.jws.JWSSigner;
+import org.example.jws.SignatureService;
 import org.jose4j.lang.JoseException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,9 +37,8 @@ public class LenderAuthApplication {
     @Bean
     JwsRequestWebFilter JwsRequestWebFilter(JWSSigner signer,
                                             @Qualifier("pathPatterns") List<PathPattern> requestPathPatterns,
-                                            @Value(LOAN_AGENT_PARTICIPANT_ID) String laParticipantId,
-                                            RegistryService registryService) {
-        return new JwsRequestWebFilter(signer, requestPathPatterns, registryService, laParticipantId);
+                                            RegistryService registryService, SignatureService signatureService) {
+        return new JwsRequestWebFilter(signer, requestPathPatterns, registryService, signatureService);
     }
 
     @Bean
