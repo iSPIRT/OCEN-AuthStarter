@@ -27,10 +27,10 @@ import static org.example.util.PropertyConstants.LOAN_AGENT_PARTICIPANT_ID;
 @SpringBootApplication
 @ComponentScan(basePackages = {"org.example"})
 @Log4j2
-public class LenderAuthApplication {
+public class LenderApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(LenderAuthApplication.class, args);
+        SpringApplication.run(LenderApplication.class, args);
     }
 
     @Bean

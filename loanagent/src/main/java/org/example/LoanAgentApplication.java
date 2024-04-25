@@ -26,26 +26,18 @@ import static org.example.util.PropertyConstants.LOAN_AGENT_CREDENTIALS_FILE;
 @SpringBootApplication
 @ComponentScan(basePackages = {"org.example"})
 @Log4j2
-public class LoanAgentLoanApplication {
+public class LoanAgentApplication {
     public static void main(String[] args) {
-        SpringApplication.run(LoanAgentLoanApplication.class, args);
-    }
-
-    @Bean
-    JwsRequestWebFilter JwsRequestWebFilter(JWSSigner signer,
-                                            @Qualifier("pathPatterns") List<PathPattern> requestPathPatterns,
-                                            @Value(LENDER_PARTICIPANT_ID) String lenderParticipantId,
-                                            RegistryService registryService) {
-        return new JwsRequestWebFilter(signer, requestPathPatterns, registryService, lenderParticipantId);
+        SpringApplication.run(LoanAgentApplication.class, args);
     }
 
     @Bean
     public JWSSigner signer() throws JoseException {
-        String LenderJwkKeySet = getLenderPublicPrivateKeyPairSet();
-        return new JWSSigner(LenderJwkKeySet.replaceAll("[\\s\\n]", ""));
+        String laJwkKeySet = getLAPublicPrivateKeyPairSet();
+        return new JWSSigner(laJwkKeySet.replaceAll("[\\s\\n]", ""));
     }
 
-    private String getLenderPublicPrivateKeyPairSet() {
+    private String getLAPublicPrivateKeyPairSet() {
         try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(LOAN_AGENT_CREDENTIALS_FILE)) {
             assert inputStream != null;
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {

@@ -20,4 +20,11 @@ public class PropertyConstants {
 
     public static final String OCEN_HEARTBEAT_EVENT_URL = "${ocen.heartbeat.event.url}";
 
+    public static final String PRODUCT_ID = "${product.id}";
+    public static final String PRODUCT_NETWORK_ID = "${product.network.id}";
+
+    public static String getPropertyName(String property){
+        return property.replaceAll("[${}]", "");
+    }
+
 }
