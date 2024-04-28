@@ -2,15 +2,19 @@ package org.example.jws;
 
 import org.example.util.JsonUtil;
 import org.example.util.PropertyConstants;
-import org.jose4j.jwk.JsonWebKeySet;
+import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.lang.JoseException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
 import java.util.Base64;
 import java.util.Map;
+
+import static org.example.jws.JWSResponseValidator.parseSign;
 
 @Service
 public class SignatureServiceImpl implements SignatureService {
@@ -43,6 +47,20 @@ public class SignatureServiceImpl implements SignatureService {
         } catch (Exception e) {
             return e.getMessage();
         }
+    }
+
+    @Override
+    public boolean verifySignature(String body, String signature, String keyset) {
+        try {
+            keyset = keyset.replaceAll("[\\s\\n]", "");
+            byte[] bodyAsBytes = body.getBytes();
+            parseSign(signature, bodyAsBytes, JsonWebKey.Factory.newJwk(keyset));
+        } catch (JoseException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Signature");
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bad Request");
+        }
+        return true;
     }
 
     @Override

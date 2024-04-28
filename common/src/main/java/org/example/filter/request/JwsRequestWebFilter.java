@@ -13,7 +13,6 @@ import org.example.jws.SignatureService;
 import org.example.registry.RegistryService;
 import org.example.util.PayloadUtil;
 import org.jose4j.jwk.JsonWebKey;
-import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.lang.JoseException;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
@@ -82,15 +81,6 @@ public class JwsRequestWebFilter extends JwsAckResponseWebFilter {
             @Nonnull
             public Flux<DataBuffer> getBody() {
                 String bearerToken = super.getHeaders().getFirst("Authorization");
-                boolean signatureVerified = false;
-                try {
-                    signatureVerified = signatureService.verifyTokenSignature(bearerToken);
-                } catch (InvalidJwtException e) {
-                    //Do Nothing
-                }
-                if (!signatureVerified) {
-                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Signature");
-                }
 
                 String participantId = PayloadUtil.getParticipantIdFromToken(bearerToken);
                 Mono<String> laPublicKey = registryService.getEntity(participantId)
