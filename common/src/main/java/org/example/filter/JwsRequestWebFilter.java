@@ -4,13 +4,11 @@
  * You shall not disclose such confidential information and shall use it only in accordance with the terms of the license
  * agreement you entered into with Finarkein Analytics Pvt. Ltd.
  */
-package org.example.filter.request;
+package org.example.filter;
 
 import lombok.extern.log4j.Log4j2;
-import org.example.filter.ackresponse.JwsAckResponseWebFilter;
-import org.example.jws.JWSSigner;
-import org.example.jws.SignatureService;
 import org.example.registry.RegistryService;
+import org.example.util.HeaderConstants;
 import org.example.util.PayloadUtil;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.lang.JoseException;
@@ -21,6 +19,7 @@ import org.springframework.http.server.PathContainer;
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import org.springframework.web.util.pattern.PathPattern;
 import reactor.core.publisher.Flux;
@@ -37,21 +36,15 @@ import static org.example.jws.JWSResponseValidator.parseSign;
 
 
 @Log4j2
-// This request filter verifies the signature using the LA public key
-public class JwsRequestWebFilter extends JwsAckResponseWebFilter {
+// This request filter verifies the signature using the participant public key
+public class JwsRequestWebFilter implements WebFilter {
 
     protected final List<PathPattern> pathPatterns;
     private final RegistryService registryService;
 
-    private final SignatureService signatureService;
-
-    public JwsRequestWebFilter(JWSSigner signer,
-                               List<PathPattern> pathPatterns,
-                               RegistryService registryService, SignatureService signatureService) {
-        super(signer);
+    public JwsRequestWebFilter(List<PathPattern> pathPatterns, RegistryService registryService) {
         this.pathPatterns = pathPatterns;
         this.registryService = registryService;
-        this.signatureService = signatureService;
     }
 
     @Nonnull
@@ -62,31 +55,31 @@ public class JwsRequestWebFilter extends JwsAckResponseWebFilter {
         PathContainer pathContainer = exchange.getRequest().getPath().pathWithinApplication();
         for (PathPattern pattern : pathPatterns) {
             if (pattern.matches(pathContainer)) {
-                return super.filter(exchange, chain);
+                return chain.filter(exchange);
             }
         }
 
         if (pathContainer.value().startsWith("/mock-request"))
-            return super.filter(exchange, chain);
+            return chain.filter(exchange);
 
         if (pathContainer.value().equalsIgnoreCase("/common/heartbeat"))
-            return super.filter(exchange, chain);
+            return chain.filter(exchange);
 
         if (pathContainer.value().equalsIgnoreCase("/common/generate-signature"))
-            return super.filter(exchange, chain);
+            return chain.filter(exchange);
 
 
         ServerHttpRequestDecorator requestDecorator = new ServerHttpRequestDecorator(exchange.getRequest()) {
             @Override
             @Nonnull
             public Flux<DataBuffer> getBody() {
-                String bearerToken = super.getHeaders().getFirst("Authorization");
+                String bearerToken = this.getHeaders().getFirst(HeaderConstants.AUTHORIZATION);
 
                 String participantId = PayloadUtil.getParticipantIdFromToken(bearerToken);
-                Mono<String> laPublicKey = registryService.getEntity(participantId)
+                Mono<String> publicKey = registryService.getEntity(participantId)
                         .map(participantDetail -> participantDetail.getPublicKey());
 
-                return Mono.zip(DataBufferUtils.join(super.getBody()), laPublicKey,
+                return Mono.zip(DataBufferUtils.join(super.getBody()), publicKey,
                                 (db, certificate) -> {
                                     try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
                                         Channels.newChannel(stream).write(db.asByteBuffer().asReadOnlyBuffer());
@@ -104,6 +97,6 @@ public class JwsRequestWebFilter extends JwsAckResponseWebFilter {
             }
 
         };
-        return super.filter(exchange.mutate().request(requestDecorator).build(), chain);
+        return chain.filter(exchange.mutate().request(requestDecorator).build());
     }
 }

@@ -19,9 +19,9 @@ import static org.example.util.PropertyConstants.LOAN_AGENT_CREDENTIALS_FILE;
 @SpringBootApplication
 @ComponentScan(basePackages = {"org.example"})
 @Log4j2
-public class LoanAgentLoanApplication {
+public class LoanAgentApplication {
     public static void main(String[] args) {
-        SpringApplication.run(LoanAgentLoanApplication.class, args);
+        SpringApplication.run(LoanAgentApplication.class, args);
     }
 
     @Bean
