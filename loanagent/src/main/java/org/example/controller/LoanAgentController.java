@@ -14,10 +14,7 @@ import org.example.util.PayloadUtil;
 import org.example.util.PropertyConstants;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -57,8 +54,8 @@ public class LoanAgentController {
         this.webClient = WebClient.create();
     }
 
-    @PostMapping("/mock-request/loan-agent/sendLoanApplicationRequest")
-    public Mono<String> sendLoanApplicationRequest(@RequestBody String body) {
+    @GetMapping("/loan-agent/trigger/loanApplicationRequest")
+    public Mono<String> triggerLoanApplicationRequest() {
         //1. Generate Own Bearer Token
         Mono<Token> tokenMono = tokenService.GetBearerToken();
         //2. Load Payload from file

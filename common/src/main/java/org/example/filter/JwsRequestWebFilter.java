@@ -59,7 +59,7 @@ public class JwsRequestWebFilter implements WebFilter {
             }
         }
 
-        if (pathContainer.value().startsWith("/mock-request"))
+        if (pathContainer.value().startsWith("/loan-agent/trigger/**"))
             return chain.filter(exchange);
 
         if (pathContainer.value().equalsIgnoreCase("/common/heartbeat"))

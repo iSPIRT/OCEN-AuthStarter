@@ -32,7 +32,7 @@ public class SecurityConfig {
                                 )
                 )
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/mock-request/**", "/actuator/**", "/common/heartbeat/**", "/health/**").permitAll()
+                        .pathMatchers("/loan-agent/trigger/**", "/common/**").permitAll()
                         .pathMatchers(HttpMethod.OPTIONS).permitAll()
                         .anyExchange().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2.authenticationManagerResolver(authManagerResolver));
