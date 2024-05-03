@@ -58,7 +58,7 @@ Reference to create Public and Private Key Pair Set - https://mkjwk.org/
 |   <div style="width:400px">API</div> | Description |
 | ----  |   ---   |  
 | Health Test |  &#8226; To check whether your server is up and running|
-| Generate Signature | &#8226; Utility API to generate signature <br>&#10; &#8226; Add LA Public and Private Keypair Set in the header with header name as **JWK_KEY_SET** <br>&#10; &#8226; Add Request Body for which you want to create signature |
+| Generate Signature | &#8226; Utility API to generate signature <br>&#10; &#8226; Add Public and Private Keypair Set in the header with header name as **JWK_KEY_SET** <br>&#10; &#8226; Add Request Body for which you want to create signature |
 | Trigger Create Loan Application | &#8226; This API triggers create loan application flow from Loan Agent Application |
 
 <br>
