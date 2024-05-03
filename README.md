@@ -1,12 +1,14 @@
 # OCEN-AuthStarter
 Sample Loan Agent and Lender Application with signature and auth token verification and Async CreateLoanApplicationRequest and CreateLoanApplicationResponse
 <br>
+<br>
 
 ## Bootstrap Process
   1. Get clientId an clientSecret
   2. Get roleId from registry
   3. Get productId and productNetworkId from registry
   4. Update the public key on the registry against the role
+<br>
 <br>
 
 ## Properties Configuration
@@ -44,19 +46,21 @@ product.network.id=3151
 
 Reference to create Public and Private Key Pair Set - https://mkjwk.org/
 <br>
+<br>
 
 ## Sample Auth Flow 
 <!-- ![WhatsApp Image 2024-03-18 at 20 04 50](https://github.com/iSPIRT/OCEN-AuthStarter/assets/16155950/eebde30b-b019-4433-a41f-8ad67fa50e86) -->
 ![Auth - Create Loan Application Flow](https://github.com/iSPIRT/OCEN-AuthStarter/assets/40620782/44dc8a00-580d-497e-859a-89267377de17)
 <br>
+<br>
 
 ## 🌐 API
-
 |   <div style="width:400px">API</div> | Description |
 | ----  |   ---   |  
 | Health Test |  &#8226; To check whether your server is up and running|
 | Generate Signature | &#8226; Utility API to generate signature <br>&#10; &#8226; Add LA Public and Private Keypair Set in the header with header name as **JWK_KEY_SET** <br>&#10; &#8226; Add Request Body for which you want to create signature |
-| Trigger Create Loan Application | &#8226; This API triggers create loan application flow from Loan Agent Application|
+| Trigger Create Loan Application | &#8226; This API triggers create loan application flow from Loan Agent Application |
+
 <br>
 
 ## Instructions to Build/Run Applications
