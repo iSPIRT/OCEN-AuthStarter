@@ -47,7 +47,7 @@ Reference to create Public and Private Key Pair Set - https://mkjwk.org/
 
 ## Sample Auth Flow 
 <!-- ![WhatsApp Image 2024-03-18 at 20 04 50](https://github.com/iSPIRT/OCEN-AuthStarter/assets/16155950/eebde30b-b019-4433-a41f-8ad67fa50e86) -->
-![Auth - Create Loan Application Flow](https://github.com/iSPIRT/OCEN-AuthStarter/assets/40620782/e720599d-6ee6-4ae3-a62e-8f061e6ec684)
+![Auth - Create Loan Application Flow](https://github.com/iSPIRT/OCEN-AuthStarter/assets/40620782/44dc8a00-580d-497e-859a-89267377de17)
 <br>
 
 ## 🌐 API
