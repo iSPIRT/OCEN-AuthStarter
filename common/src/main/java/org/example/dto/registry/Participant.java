@@ -1,4 +1,4 @@
-package org.example.registry;
+package org.example.dto.registry;
 
 
 import lombok.AllArgsConstructor;

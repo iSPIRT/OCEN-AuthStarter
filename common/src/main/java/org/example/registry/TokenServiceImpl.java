@@ -1,5 +1,6 @@
 package org.example.registry;
 
+import org.example.dto.registry.Token;
 import org.example.util.PropertyConstants;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;

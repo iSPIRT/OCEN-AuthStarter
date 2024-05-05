@@ -2,6 +2,8 @@ package org.example.registry;
 
 
 import lombok.extern.log4j.Log4j2;
+import org.example.dto.registry.ParticipantDetail;
+import org.example.dto.registry.ProductNetworkDetail;
 import org.example.util.PropertyConstants;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -17,14 +19,17 @@ import java.time.Duration;
 @Log4j2
 public class RegistryServiceImpl implements RegistryService {
 
+    public static final String PARTICIPANT_ROLES_URL = "/participant-roles/%s";
+    public static final String PRODUCT_NETWORKS_URL = "/product-network/%s/participants";
+
     private final WebClient webClient;
-    private final String participantRolesUrl;
+    private final String ocenRegistryBaseUrl;
     private final TokenService tokenService;
     private final Retry retrySpec;
 
-    public RegistryServiceImpl(@Value(PropertyConstants.OCEN_REGISTRY_PARTICIPANT_ROLE_URL) String participantRolesUrl, TokenService tokenService) {
+    public RegistryServiceImpl(@Value(PropertyConstants.OCEN_REGISTRY_BASE_URL) String ocenRegistryBaseUrl, TokenService tokenService) {
 
-        this.participantRolesUrl = participantRolesUrl;
+        this.ocenRegistryBaseUrl = ocenRegistryBaseUrl;
         this.tokenService = tokenService;
 
         WebClient.Builder webcliBuilder = WebClient.builder();
@@ -36,14 +41,27 @@ public class RegistryServiceImpl implements RegistryService {
     }
 
     @Override
-    public Mono<ParticipantDetail> getEntity(String entityId) {
+    public Mono<ParticipantDetail> getParticipantDetailByParticipantId(String participantId) {
         return tokenService.GetBearerToken()
                 .flatMap(token -> {
                     log.info("Token - " + token);
-                    return webClient.get().uri(participantRolesUrl + entityId)
+                    return webClient.get().uri(ocenRegistryBaseUrl + String.format(PARTICIPANT_ROLES_URL, participantId))
                             .header("Authorization", "Bearer " + token.getAccessToken())
                             .retrieve()
                             .bodyToMono(ParticipantDetail.class)
+                            .retryWhen(retrySpec);
+                });
+    }
+
+    @Override
+    public Mono<ProductNetworkDetail> getProductNetworkParticipantsByNetworkID(String productNetworkId) {
+        return tokenService.GetBearerToken()
+                .flatMap(token -> {
+                    log.info("Token - " + token);
+                    return webClient.get().uri(ocenRegistryBaseUrl + String.format(PRODUCT_NETWORKS_URL, productNetworkId))
+                            .header("Authorization", "Bearer " + token.getAccessToken())
+                            .retrieve()
+                            .bodyToMono(ProductNetworkDetail.class)
                             .retryWhen(retrySpec);
                 });
     }

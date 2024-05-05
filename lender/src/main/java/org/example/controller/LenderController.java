@@ -1,19 +1,19 @@
 package org.example.controller;
 
 import lombok.extern.log4j.Log4j2;
-import org.example.dto.CreateLoanApplicationRequest;
-import org.example.dto.LenderAckResponse;
+import org.example.dto.journey.CreateLoanApplicationRequest;
+import org.example.dto.journey.LenderAckResponse;
+import org.example.dto.registry.ParticipantDetail;
+import org.example.dto.registry.Token;
 import org.example.heartbeat.HeartbeatEvent;
 import org.example.heartbeat.HeartbeatEventType;
 import org.example.heartbeat.HeartbeatResponse;
 import org.example.heartbeat.HeartbeatService;
 import org.example.jws.SignatureService;
-import org.example.registry.Token;
+import org.example.registry.RegistryService;
 import org.example.registry.TokenService;
 import org.example.util.JsonUtil;
 import org.example.util.PayloadUtil;
-import org.example.util.PropertyConstants;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,43 +39,42 @@ public class LenderController {
 
     public static final String LA_CREATE_LOAN_APPLICATION_RESPONSE_URL = "http://localhost:8085/v4.0.0alpha/loanApplications/createLoanResponse";
 
-    private final HeartbeatService heartbeatService;
-    private final String productId;
-    private final String productNetworkId;
     private final TokenService tokenService;
     private final SignatureService signatureService;
+    private final RegistryService registryService;
+    private final HeartbeatService heartbeatService;
+
 
     private final WebClient webClient;
 
 
     public LenderController(HeartbeatService heartbeatService,
-                            @Value(PropertyConstants.PRODUCT_ID) String productId,
-                            @Value(PropertyConstants.PRODUCT_NETWORK_ID) String productNetworkId,
-                            TokenService tokenService, SignatureService signatureService) {
+                            TokenService tokenService, SignatureService signatureService,
+                            RegistryService registryService) {
         this.heartbeatService = heartbeatService;
-        this.productId = productId;
-        this.productNetworkId = productNetworkId;
         this.tokenService = tokenService;
         this.signatureService = signatureService;
         this.webClient = WebClient.create();
+        this.registryService = registryService;
     }
 
     @PostMapping("/v4.0.0alpha/loanApplications/createLoanRequest")
-    public Mono<LenderAckResponse> sendLoanApplicationResponse(@RequestBody CreateLoanApplicationRequest createLoanApplicationRequest) {
+    public Mono<LenderAckResponse> sendLoanApplicationResponse(@RequestBody CreateLoanApplicationRequest request) {
         //1. Send heartbeat event
-        sendHeartBeatEvent(HeartbeatEventType.CREATE_LOAN_APPLICATION_REQUEST_ACK);
+        sendHeartBeatEvent(request.getProductData().getProductId(), request.getProductData().getProductNetworkId(),
+                HeartbeatEventType.CREATE_LOAN_APPLICATION_REQUEST_ACK);
 
         //2. Process request and send async response to LA
-        sendAsyncResponseToLA();
+        sendAsyncResponseToLA(request);
 
         //3. Send request acknowledgement response
         return Mono.just(LenderAckResponse.builder()
-                        .traceId(createLoanApplicationRequest.getMetadata().getTraceId())
+                        .traceId(request.getMetadata().getTraceId())
                         .timestamp(LocalDateTime.now().toString())
                 .build());
     }
 
-    private void sendAsyncResponseToLA() {
+    private void sendAsyncResponseToLA(CreateLoanApplicationRequest request) {
         //1. Generate Own Bearer Token
         Mono<Token> tokenMono = tokenService.GetBearerToken();
         //2. Load Payload from file
@@ -83,15 +82,24 @@ public class LenderController {
         //3. Generate Payload Signature
         String signature = signatureService.generateParticipantSignature(loanApplicationResponsePayload);
 
-        //4. Hit LoanAgent API
-        Mono<String> laCreateLoanResponseMono = tokenMono.flatMap(token -> webClient.post()
-                .uri(LA_CREATE_LOAN_APPLICATION_RESPONSE_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .header(X_JWS_SIGNATURE, signature)
-                .header(AUTHORIZATION, BEARER + token.getAccessToken())
-                .body(BodyInserters.fromValue(loanApplicationResponsePayload))
-                .retrieve()
-                .bodyToMono(String.class));
+        //4. Get LA participant details
+        Mono<ParticipantDetail> laParticipantDetail = registryService.getParticipantDetailByParticipantId(request.getMetadata().getOriginatorParticipantId());
+
+        //5. Hit LoanAgent API
+        Mono<String> laCreateLoanResponseMono = Mono.zip(tokenMono, laParticipantDetail)
+                .flatMap(tuples -> {
+                    Token token = tuples.getT1();
+                    ParticipantDetail participantDetail = tuples.getT2();
+
+                    return webClient.post()
+                            .uri(participantDetail.getBaseUrl() + LA_CREATE_LOAN_APPLICATION_RESPONSE_URL)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .header(X_JWS_SIGNATURE, signature)
+                            .header(AUTHORIZATION, BEARER + token.getAccessToken())
+                            .body(BodyInserters.fromValue(loanApplicationResponsePayload))
+                            .retrieve()
+                            .bodyToMono(String.class);
+                });
 
         laCreateLoanResponseMono.subscribe(
                 s -> Mono.empty(),
@@ -99,8 +107,9 @@ public class LenderController {
                 () -> log.info("Create Loan Application Async Response Sent")
         );
 
-        //5. Send heartbeat event
-        sendHeartBeatEvent(HeartbeatEventType.CREATE_LOAN_APPLICATIONS_RESPONSE);
+        //6. Send heartbeat event
+        sendHeartBeatEvent(request.getProductData().getProductId(), request.getProductData().getProductNetworkId(),
+                HeartbeatEventType.CREATE_LOAN_APPLICATIONS_RESPONSE);
     }
 
     private String getLoanApplicationResponsePayload() {
@@ -116,7 +125,7 @@ public class LenderController {
         return null;
     }
 
-    private void sendHeartBeatEvent(HeartbeatEventType heartbeatEventType) {
+    private void sendHeartBeatEvent(String productId, String productNetworkId, HeartbeatEventType heartbeatEventType) {
         HeartbeatEvent heartbeatEvent = PayloadUtil.buildHeartbeatEvent(heartbeatEventType, productId, productNetworkId);
         log.info("Sending Heartbeat Event - {}",heartbeatEventType);
         Mono<HeartbeatResponse> heartbeatResponseMono = heartbeatService.sendHeartbeat(heartbeatEvent);

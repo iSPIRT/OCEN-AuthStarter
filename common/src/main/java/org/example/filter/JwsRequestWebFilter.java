@@ -76,7 +76,7 @@ public class JwsRequestWebFilter implements WebFilter {
                 String bearerToken = this.getHeaders().getFirst(HeaderConstants.AUTHORIZATION);
 
                 String participantId = PayloadUtil.getParticipantIdFromToken(bearerToken);
-                Mono<String> publicKey = registryService.getEntity(participantId)
+                Mono<String> publicKey = registryService.getParticipantDetailByParticipantId(participantId)
                         .map(participantDetail -> participantDetail.getPublicKey());
 
                 return Mono.zip(DataBufferUtils.join(super.getBody()), publicKey,

@@ -15,7 +15,7 @@ public class PropertyConstants {
 
     public static final String OCEN_TOKEN_GEN_URL = "${ocen.token.generation.url}";
 
-    public static final String OCEN_REGISTRY_PARTICIPANT_ROLE_URL = "${ocen.participant.roles.url}";
+    public static final String OCEN_REGISTRY_BASE_URL = "${ocen.registry.base.url}";
 
     public static final String OCEN_API_SECURITY_JWT_ISSUER = "${ocen.api.security.jwt.issuer}";
 
