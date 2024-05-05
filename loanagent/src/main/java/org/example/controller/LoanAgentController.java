@@ -73,7 +73,7 @@ public class LoanAgentController {
         //4. Get Product Network details by product network id
         Mono<ProductNetworkDetail> productNetworkDetailMono = registryService.getProductNetworkParticipantsByNetworkID(productNetworkId);
 
-        //5. Call all the lenders which are part of product network
+        //5. Call all the lenders that are part of the product network
         Mono<List<LenderAckResponse>> lenderAckResponseListMono = Mono.zip(tokenMono, productNetworkDetailMono)
                 .flatMapMany(tuples -> {
                     Token token = tuples.getT1();
