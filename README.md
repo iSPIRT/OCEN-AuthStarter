@@ -7,7 +7,7 @@ Sample Loan Agent and Lender Application with signature and auth token verificat
   1. Get clientId an clientSecret
   2. Get roleId from registry
   3. Get productId and productNetworkId from registry
-  4. Update the public key on the registry against the role
+  4. Update the base url and public key on the registry against the role
 <br>
 <br>
 
@@ -23,8 +23,8 @@ client.secret=LGweLUAP7OEryjiQQK4byGppswSJYIph
 // For generating token 
 ocen.token.generation.url=https://auth.ocen.network/realms/dev/protocol/openid-connect/token
 
-// For fetching the requeting role object which has the public key for signature verification 
-ocen.participant.roles.url=https://dev.ocen.network/service/participant-roles/
+// For interacting with registry apis  
+ocen.registry.base.url=https://dev.ocen.network/service
 
 // For verifying the Auth Token
 ocen.api.security.jwt.issuer=${API_TOKEN_ISSUER:https://auth.ocen.network/realms/dev}
