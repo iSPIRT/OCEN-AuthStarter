@@ -37,7 +37,7 @@ import static org.example.util.PropertyConstants.CREATE_LOAN_APPLICATION_RESPONS
 @Log4j2
 public class LenderController {
 
-    public static final String LA_CREATE_LOAN_APPLICATION_RESPONSE_URL = "http://localhost:8085/v4.0.0alpha/loanApplications/createLoanResponse";
+    public static final String LA_CREATE_LOAN_APPLICATION_RESPONSE_URL = "/v4.0.0alpha/loanApplications/createLoanResponse";
 
     private final TokenService tokenService;
     private final SignatureService signatureService;

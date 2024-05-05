@@ -35,7 +35,7 @@ import static org.example.util.PropertyConstants.CREATE_LOAN_APPLICATION_REQUEST
 @RequestMapping("/")
 @Log4j2
 public class LoanAgentController {
-    public static final String LENDER_CREATE_LOAN_URL = "http://localhost:8084/v4.0.0alpha/loanApplications/createLoanRequest";
+    public static final String LENDER_CREATE_LOAN_APPLICATION_REQUEST_URL = "/v4.0.0alpha/loanApplications/createLoanRequest";
 
     private final HeartbeatService heartbeatService;
     private final TokenService tokenService;
@@ -82,7 +82,7 @@ public class LoanAgentController {
                     return Flux.fromIterable(productNetworkDetail.getLenders())
                             // For each lender, make an asynchronous API call
                             .flatMap(lender -> webClient.post()
-                                    .uri(lender.getBaseUrl() + LENDER_CREATE_LOAN_URL)
+                                    .uri(lender.getBaseUrl() + LENDER_CREATE_LOAN_APPLICATION_REQUEST_URL)
                                     .contentType(MediaType.APPLICATION_JSON)
                                     .header(X_JWS_SIGNATURE, requestBodySignature)
                                     .header(AUTHORIZATION, BEARER + token.getAccessToken())
