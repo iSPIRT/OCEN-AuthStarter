@@ -20,6 +20,11 @@ public class JWSSigner {
         publicKeyAsJson = this.jsonWebKeySet.getJsonWebKeys().get(0).toJson(JsonWebKey.OutputControlLevel.PUBLIC_ONLY);
     }
 
+    public JWSSigner(JsonWebKeySet jsonWebKeySet) {
+        this.jsonWebKeySet = jsonWebKeySet;
+        publicKeyAsJson = this.jsonWebKeySet.getJsonWebKeys().get(0).toJson(JsonWebKey.OutputControlLevel.PUBLIC_ONLY);
+    }
+
 
     /**
      * This method generates a detached json web signature,

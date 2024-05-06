@@ -1,4 +1,4 @@
-package org.example.registry;
+package org.example.dto.registry;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

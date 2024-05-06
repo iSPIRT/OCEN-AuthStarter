@@ -1,7 +1,11 @@
 package org.example.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class JsonUtil {
 
@@ -14,6 +18,17 @@ public class JsonUtil {
             return json;
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static Map<String, Object> fromJson(String json) {
+        TypeReference<HashMap<String, Object>> typeRef = new TypeReference<>() {
+        };
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.readValue(json, typeRef);
+        } catch (JsonProcessingException e) {
+            return null;
         }
     }
 
