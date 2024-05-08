@@ -1,19 +1,22 @@
 package org.example.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.log4j.Log4j2;
-import org.example.dto.journey.CreateLoanApplicationRequest;
-import org.example.dto.journey.LenderAckResponse;
+import org.example.dto.heartbeat.HeartbeatEventRequest;
+import org.example.dto.heartbeat.HeartbeatEventType;
+import org.example.dto.heartbeat.HeartbeatResponse;
+import org.example.dto.journey.*;
 import org.example.dto.registry.ParticipantDetail;
 import org.example.dto.registry.Token;
-import org.example.heartbeat.HeartbeatEvent;
-import org.example.heartbeat.HeartbeatEventType;
-import org.example.heartbeat.HeartbeatResponse;
 import org.example.heartbeat.HeartbeatService;
 import org.example.jws.SignatureService;
 import org.example.registry.RegistryService;
 import org.example.registry.TokenService;
 import org.example.util.JsonUtil;
 import org.example.util.PayloadUtil;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -44,7 +47,7 @@ public class LenderController {
     private final RegistryService registryService;
     private final HeartbeatService heartbeatService;
 
-
+    private final ObjectMapper objectMapper;
     private final WebClient webClient;
 
 
@@ -56,19 +59,20 @@ public class LenderController {
         this.signatureService = signatureService;
         this.webClient = WebClient.create();
         this.registryService = registryService;
+        this.objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     @PostMapping("/v4.0.0alpha/loanApplications/createLoanRequest")
-    public Mono<LenderAckResponse> sendLoanApplicationResponse(@RequestBody CreateLoanApplicationRequest request) {
+    public Mono<OcenAckResponse> sendLoanApplicationResponse(@RequestBody CreateLoanApplicationRequest request) {
         //1. Send heartbeat event
-        sendHeartBeatEvent(request.getProductData().getProductId(), request.getProductData().getProductNetworkId(),
-                HeartbeatEventType.CREATE_LOAN_APPLICATION_REQUEST_ACK);
+        sendHeartbeatsForCreateLoanRequestAck(request);
 
         //2. Process request and send async response to LA
         sendAsyncResponseToLA(request);
 
         //3. Send request acknowledgement response
-        return Mono.just(LenderAckResponse.builder()
+        return Mono.just(OcenAckResponse.builder()
                         .traceId(request.getMetadata().getTraceId())
                         .timestamp(LocalDateTime.now().toString())
                 .build());
@@ -78,15 +82,21 @@ public class LenderController {
         //1. Generate Own Bearer Token
         Mono<Token> tokenMono = tokenService.GetBearerToken();
         //2. Load Payload from file
-        String loanApplicationResponsePayload = getLoanApplicationResponsePayload();
+        CreateLoanApplicationResponse response = getLoanApplicationResponsePayload();
         //3. Generate Payload Signature
-        String signature = signatureService.generateParticipantSignature(loanApplicationResponsePayload);
+        String signature = null;
+        try {
+            signature = signatureService.generateParticipantSignature(objectMapper.writeValueAsString(response));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
 
         //4. Get LA participant details
         Mono<ParticipantDetail> laParticipantDetail = registryService.getParticipantDetailByParticipantId(request.getMetadata().getOriginatorParticipantId());
 
-        //5. Hit LoanAgent API
-        Mono<String> laCreateLoanResponseMono = Mono.zip(tokenMono, laParticipantDetail)
+        //5. Hit LoanAgent API and send Heart beat event
+        String finalSignature = signature;
+        Mono<OcenAckResponse> laOcenAckResponseMono = Mono.zip(tokenMono, laParticipantDetail)
                 .flatMap(tuples -> {
                     Token token = tuples.getT1();
                     ParticipantDetail participantDetail = tuples.getT2();
@@ -94,30 +104,43 @@ public class LenderController {
                     return webClient.post()
                             .uri(participantDetail.getBaseUrl() + LA_CREATE_LOAN_APPLICATION_RESPONSE_URL)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .header(X_JWS_SIGNATURE, signature)
+                            .header(X_JWS_SIGNATURE, finalSignature)
                             .header(AUTHORIZATION, BEARER + token.getAccessToken())
-                            .body(BodyInserters.fromValue(loanApplicationResponsePayload))
+                            .body(BodyInserters.fromValue(response))
                             .retrieve()
-                            .bodyToMono(String.class);
+                            .onStatus(HttpStatus::isError, clientResponse -> {
+                                int statusCode = clientResponse.statusCode().value();
+                                return clientResponse.bodyToMono(String.class)
+                                        .flatMap(errorMessage -> {
+                                            log.error("Error while sending async create loan application response for la - {}, Error - {}", participantDetail.getId(), errorMessage);
+                                            sendHeartbeatsForCreateLoanResponse(response, statusCode, errorMessage,
+                                                    request.getMetadata().getOriginatorParticipantId());
+                                            return Mono.error(new RuntimeException(errorMessage)); // Return an error Mono
+                                        });
+                            })
+                            .bodyToMono(OcenAckResponse.class)
+                            .doOnNext(ocenAckResponse -> {
+                                log.info("Successfully sent loan application response for la - {}. Status Code: 200, Response: {}", participantDetail.getId(), ocenAckResponse);
+                                sendHeartbeatsForCreateLoanResponse(response, 200, ocenAckResponse.toString(),
+                                        request.getMetadata().getOriginatorParticipantId());
+                            });
                 });
 
-        laCreateLoanResponseMono.subscribe(
+        laOcenAckResponseMono.subscribe(
                 s -> Mono.empty(),
-                throwable -> log.info("Error in laCreateLoanResponseMono Subscription - {}", throwable.getMessage()),
+                throwable -> log.info("Error in laOcenAckResponseMono Subscription - {}", throwable.getMessage()),
                 () -> log.info("Create Loan Application Async Response Sent")
         );
-
-        //6. Send heartbeat event
-        sendHeartBeatEvent(request.getProductData().getProductId(), request.getProductData().getProductNetworkId(),
-                HeartbeatEventType.CREATE_LOAN_APPLICATIONS_RESPONSE);
     }
 
-    private String getLoanApplicationResponsePayload() {
+
+    private CreateLoanApplicationResponse getLoanApplicationResponsePayload() {
         try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(CREATE_LOAN_APPLICATION_RESPONSE_JSON)) {
             assert inputStream != null;
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-                return reader.lines()
+                String responseJson = reader.lines()
                         .collect(Collectors.joining(System.lineSeparator()));
+                return objectMapper.readValue(responseJson, CreateLoanApplicationResponse.class);
             }
         } catch (Exception e) {
             log.error("Error while reading " + CREATE_LOAN_APPLICATION_RESPONSE_JSON + " file, Error - ", e);
@@ -125,13 +148,30 @@ public class LenderController {
         return null;
     }
 
-    private void sendHeartBeatEvent(String productId, String productNetworkId, HeartbeatEventType heartbeatEventType) {
-        HeartbeatEvent heartbeatEvent = PayloadUtil.buildHeartbeatEvent(heartbeatEventType, productId, productNetworkId);
+    private void sendHeartbeatsForCreateLoanRequestAck(CreateLoanApplicationRequest request) {
+        for(LoanApplication loanApplication : request.getLoanApplications()) {
+            sendHeartBeatEvent(HeartbeatEventType.CREATE_LOAN_APPLICATION_REQUEST_ACK, request.getProductData(), request.getMetadata().getRequestId(),
+                    loanApplication.getLoanApplicationId(), 200, "Success", request.getMetadata().getOriginatorParticipantId());
+        }
+    }
+
+    private void sendHeartbeatsForCreateLoanResponse(CreateLoanApplicationResponse response, Integer responseCode, String responseMessage,
+                                                     String roleId) {
+        for(LoanApplication loanApplication : response.getLoanApplications()) {
+            sendHeartBeatEvent(HeartbeatEventType.CREATE_LOAN_APPLICATIONS_RESPONSE, response.getProductData(), response.getMetadata().getRequestId(),
+                    loanApplication.getLoanApplicationId(), responseCode, responseMessage, roleId);
+        }
+    }
+
+    private void sendHeartBeatEvent(HeartbeatEventType heartbeatEventType, ProductData productData, String requestId,
+                                    String loanApplicationId, Integer responseCode, String responseMessage, String roleId) {
+        HeartbeatEventRequest heartbeatEventRequest = PayloadUtil.buildHeartbeatEvent(heartbeatEventType, productData, requestId,
+                loanApplicationId, responseCode, responseMessage, roleId);
         log.info("Sending Heartbeat Event - {}",heartbeatEventType);
-        Mono<HeartbeatResponse> heartbeatResponseMono = heartbeatService.sendHeartbeat(heartbeatEvent);
+        Mono<HeartbeatResponse> heartbeatResponseMono = heartbeatService.sendHeartbeat(heartbeatEventRequest);
         heartbeatResponseMono.subscribe(
                 t -> log.info("HeartbeatResponse - {}", JsonUtil.toJson(t)),
-                throwable -> log.info("Error in {} heartbeat event mono Subscription - {}", heartbeatEvent, throwable.getMessage()),
+                throwable -> log.info("Error in {} heartbeat event mono Subscription - {}", heartbeatEventRequest, throwable.getMessage()),
                 Mono::empty);
     }
 }

@@ -1,32 +1,38 @@
 package org.example.util;
 
-import org.example.heartbeat.HeartbeatEvent;
-import org.example.heartbeat.HeartbeatEventType;
+import org.example.dto.heartbeat.HeartbeatEvent;
+import org.example.dto.heartbeat.HeartbeatEventRequest;
+import org.example.dto.heartbeat.HeartbeatEventType;
+import org.example.dto.heartbeat.Recipient;
+import org.example.dto.journey.ProductData;
 
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 public class PayloadUtil {
-    public static HeartbeatEvent buildHeartbeatEvent(HeartbeatEventType eventType, String productId, String productNetworkId) {
+    public static HeartbeatEventRequest buildHeartbeatEvent(HeartbeatEventType eventType, ProductData productData,
+                                                            String requestId, String loanApplicationId, Integer responseCode,
+                                                            String responseMessage, String roleId) {
         long timestamp = new Date().getTime();
-        HeartbeatEvent.ProductData productData = new HeartbeatEvent.ProductData();
-        productData.setProductId(productId);
-        productData.setProductNetworkId(productNetworkId);
 
-        HeartbeatEvent.LoanMetadata loanMetadata = new HeartbeatEvent.LoanMetadata();
-        loanMetadata.setLoanApplicationId("some-application-id" + timestamp);
-        loanMetadata.setLoanId("some-loan-id" + timestamp);
-        loanMetadata.setProductData(productData);
+        HeartbeatEvent.LoanMetadata loanMetaData = new HeartbeatEvent.LoanMetadata();
+        loanMetaData.setLoanApplicationId(loanApplicationId);
+        loanMetaData.setProductData(productData);
 
         HeartbeatEvent heartbeatEvent = new HeartbeatEvent();
         heartbeatEvent.setTimestamp(timestamp);
         heartbeatEvent.setEventType(eventType);
-        heartbeatEvent.setResponseCode(200);
-        heartbeatEvent.setLoanMetadata(loanMetadata);
-        heartbeatEvent.setRequestId("createLoanRequestSample");
+        heartbeatEvent.setRecipients(List.of(Recipient.builder()
+                        .roleId(roleId)
+                        .responseCode(responseCode)
+                        .responseMessage(responseMessage)
+                .build()));
+        heartbeatEvent.setLoanMetaData(loanMetaData);
+        heartbeatEvent.setRequestId(requestId);
 
-        return heartbeatEvent;
+        return new HeartbeatEventRequest(heartbeatEvent);
     }
 
     public static String getParticipantIdFromToken(String bearerToken) {

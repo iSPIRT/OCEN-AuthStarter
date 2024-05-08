@@ -2,18 +2,18 @@
   "metadata": {
     "version": "string",
     "originatorOrgId": "string",
-    "originatorParticipantId": "string",
+    "originatorParticipantId": "3005",
     "timestamp": "string",
-    "traceId": "string",
-    "requestId": "string"
+    "traceId": "669a22c2-73dd-4bfe-b51e-d71fb473fd54",
+    "requestId": "6494d8d0-a0a7-4ead-89f2-88a5640a5548"
   },
   "response": {
     "status": "SUCCESS",
     "responseDetail": "string"
   },
   "productData": {
-    "productId": "string",
-    "productNetworkId": "string"
+    "productId": "3101",
+    "productNetworkId": "3151"
   },
   "loanApplications": [
     {

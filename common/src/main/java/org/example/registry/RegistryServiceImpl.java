@@ -4,6 +4,7 @@ package org.example.registry;
 import lombok.extern.log4j.Log4j2;
 import org.example.dto.registry.ParticipantDetail;
 import org.example.dto.registry.ProductNetworkDetail;
+import org.example.util.HeaderConstants;
 import org.example.util.PropertyConstants;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -20,7 +21,7 @@ import java.time.Duration;
 public class RegistryServiceImpl implements RegistryService {
 
     public static final String PARTICIPANT_ROLES_URL = "/participant-roles/%s";
-    public static final String PRODUCT_NETWORKS_URL = "/product-network/%s/participants";
+    public static final String PRODUCT_NETWORKS_URL = "/product-networks/%s/participants";
 
     private final WebClient webClient;
     private final String ocenRegistryBaseUrl;
@@ -46,7 +47,7 @@ public class RegistryServiceImpl implements RegistryService {
                 .flatMap(token -> {
                     log.info("Token - " + token);
                     return webClient.get().uri(ocenRegistryBaseUrl + String.format(PARTICIPANT_ROLES_URL, participantId))
-                            .header("Authorization", "Bearer " + token.getAccessToken())
+                            .header(HeaderConstants.AUTHORIZATION, HeaderConstants.BEARER + token.getAccessToken())
                             .retrieve()
                             .bodyToMono(ParticipantDetail.class)
                             .retryWhen(retrySpec);
@@ -59,7 +60,7 @@ public class RegistryServiceImpl implements RegistryService {
                 .flatMap(token -> {
                     log.info("Token - " + token);
                     return webClient.get().uri(ocenRegistryBaseUrl + String.format(PRODUCT_NETWORKS_URL, productNetworkId))
-                            .header("Authorization", "Bearer " + token.getAccessToken())
+                            .header(HeaderConstants.AUTHORIZATION, HeaderConstants.BEARER + token.getAccessToken())
                             .retrieve()
                             .bodyToMono(ProductNetworkDetail.class)
                             .retryWhen(retrySpec);
