@@ -20,9 +20,4 @@ public class PropertyConstants {
     public static final String OCEN_API_SECURITY_JWT_ISSUER = "${ocen.api.security.jwt.issuer}";
 
     public static final String OCEN_HEARTBEAT_EVENT_URL = "${ocen.heartbeat.event.url}";
-
-    public static final String PRODUCT_ID = "${product.id}";
-
-    public static final String PRODUCT_NETWORK_ID = "${product.network.id}";
-
 }

@@ -31,10 +31,6 @@ ocen.api.security.jwt.issuer=${API_TOKEN_ISSUER:https://auth.ocen.network/realms
 
 // For updating the heartbeat events
 ocen.heartbeat.event.url=http://analytics-dev.ocen.network/ocen/v4/event
-
-// Product references for Loan Application
-product.id=3101
-product.network.id=3151
 ```
 ### Loan Agent Application
 
@@ -49,7 +45,7 @@ Reference to create Public and Private Key Pair Set - https://mkjwk.org/
 <br>
 
 ## Sample Auth Flow 
-![Auth - Create Loan Application Flow](https://github.com/iSPIRT/OCEN-AuthStarter/assets/40620782/44dc8a00-580d-497e-859a-89267377de17)
+![Auth - Create Loan Application Flow](https://github.com/iSPIRT/OCEN-AuthStarter/assets/40620782/9355d4c6-80ff-4782-830a-2df7734c6096)
 <br>
 <br>
 

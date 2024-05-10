@@ -1,9 +1,10 @@
 package org.example.heartbeat;
 
 import lombok.extern.log4j.Log4j2;
+import org.example.dto.heartbeat.HeartbeatEventRequest;
+import org.example.dto.heartbeat.HeartbeatResponse;
 import org.example.registry.TokenService;
 import org.example.util.HeaderConstants;
-import org.example.util.JsonUtil;
 import org.example.util.PropertyConstants;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -43,13 +44,14 @@ public class HeartbeatServiceImpl implements HeartbeatService {
     }
 
     @Override
-    public Mono<HeartbeatResponse> sendHeartbeat(HeartbeatEvent event) {
+    public Mono<HeartbeatResponse> sendHeartbeat(HeartbeatEventRequest heartbeatEventRequest) {
         return tokenService.GetBearerToken()
                 .flatMap(token -> {
-                    log.info("Token - " + token + " " + JsonUtil.toJson(event));
+                    log.info("Token - " + token);
+                    log.info("HeartbeatEventRequest - " + heartbeatEventRequest);
                     return webClient.post().uri(heartbeatEventUrl)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .bodyValue(JsonUtil.toJson(event))
+                            .bodyValue(heartbeatEventRequest)
                             .header(HeaderConstants.AUTHORIZATION, HeaderConstants.BEARER + token.getAccessToken())
                             .retrieve().onStatus(HttpStatus::is5xxServerError, t -> Mono.empty())
                             .bodyToMono(HeartbeatResponse.class)

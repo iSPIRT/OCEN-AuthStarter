@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class LenderAckResponse {
+public class OcenAckResponse {
     private String error;
     private String traceId;
     private String timestamp;
