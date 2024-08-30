@@ -6,14 +6,11 @@ import org.example.dto.heartbeat.HeartbeatEventType;
 import org.example.dto.heartbeat.Recipient;
 import org.example.dto.journey.ProductData;
 
-import java.util.Base64;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class PayloadUtil {
     public static HeartbeatEventRequest buildHeartbeatEvent(HeartbeatEventType eventType, ProductData productData,
-                                                            String requestId, String loanApplicationId, Integer responseCode,
+                                                            String loanApplicationId, Integer responseCode,
                                                             String responseMessage, String roleId) {
         long timestamp = new Date().getTime();
 
@@ -30,7 +27,7 @@ public class PayloadUtil {
                         .responseMessage(responseMessage)
                 .build()));
         heartbeatEvent.setLoanMetaData(loanMetaData);
-        heartbeatEvent.setRequestId(requestId);
+        heartbeatEvent.setRequestId(UUID.randomUUID().toString());
 
         return new HeartbeatEventRequest(heartbeatEvent);
     }

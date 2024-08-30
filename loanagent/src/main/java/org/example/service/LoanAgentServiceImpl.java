@@ -148,7 +148,7 @@ public class LoanAgentServiceImpl implements LoanAgentService{
 
     private void sendHeartbeatsForCreateLoanResponseAck(CreateLoanApplicationResponse response) {
         for(LoanApplication loanApplication : response.getLoanApplications()) {
-            sendHeartBeatEvent(HeartbeatEventType.CREATE_LOAN_APPLICATIONS_RESPONSE_ACK, response.getProductData(), response.getMetadata().getRequestId(),
+            sendHeartBeatEvent(HeartbeatEventType.CREATE_LOAN_APPLICATIONS_RESPONSE_ACK, response.getProductData(),
                     loanApplication.getLoanApplicationId(), 200, "Success", response.getMetadata().getOriginatorParticipantId());
         }
     }
@@ -156,15 +156,15 @@ public class LoanAgentServiceImpl implements LoanAgentService{
     private void sendHeartbeatsForCreateLoanRequest(CreateLoanApplicationRequest request, Integer responseCode, String responseMessage,
                                                     String roleId) {
         for(LoanApplication loanApplication : request.getLoanApplications()) {
-            sendHeartBeatEvent(HeartbeatEventType.CREATE_LOAN_APPLICATION_REQUEST, request.getProductData(), request.getMetadata().getRequestId(),
+            sendHeartBeatEvent(HeartbeatEventType.CREATE_LOAN_APPLICATION_REQUEST, request.getProductData(),
                     loanApplication.getLoanApplicationId(), responseCode, responseMessage, roleId);
         }
     }
 
-    private void sendHeartBeatEvent(HeartbeatEventType heartbeatEventType, ProductData productData, String requestId,
+    private void sendHeartBeatEvent(HeartbeatEventType heartbeatEventType, ProductData productData,
                                     String loanApplicationId, Integer responseCode, String responseMessage,
                                     String roleId) {
-        HeartbeatEventRequest heartbeatEventRequest = PayloadUtil.buildHeartbeatEvent(heartbeatEventType, productData, requestId,
+        HeartbeatEventRequest heartbeatEventRequest = PayloadUtil.buildHeartbeatEvent(heartbeatEventType, productData,
                 loanApplicationId, responseCode, responseMessage, roleId);
         log.info("Sending Heartbeat Event - {}",heartbeatEventType);
         Mono<HeartbeatResponse> heartbeatResponseMono = heartbeatService.sendHeartbeat(heartbeatEventRequest);
